@@ -1,1 +1,3 @@
-pyTelegramBotAPI
+black
+isort
+python-telegram-bot
