@@ -93,7 +93,7 @@ def fast_hasher(update, context):
         print(hashed)
         if message == hashed:
             print("Success")
-            update.message.reply_text(settings.FLAG)
+            update.message.reply_text(settings.FLAG1)
     except Exception as e:
         print(e)
     rand = "".join(random.choice(ascii_letters) for _ in range(20))
