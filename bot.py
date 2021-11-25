@@ -1,4 +1,6 @@
 import hashlib
+import os
+import pickle
 import random
 from string import ascii_letters
 from time import sleep
@@ -11,8 +13,22 @@ import settings
 hello = "ju57 7ry 70 b347 my h45h3r! y0u mu57 h45h 7h3 57r1n65"
 flag_prefix = "CODEBERRY_CTF"
 timeout = 1
-dict_of_challengers = {}
-solved_flags = {}
+hashed_flags = {}
+
+
+def read_statusboard():
+    global dict_of_challengers
+    if os.path.exists("dict_of_challengers"):
+        with open("dict_of_challengers", "rb") as f:
+            dict_of_challengers = pickle.load(f)
+    else:
+        dict_of_challengers = {}
+    global solved_flags
+    if os.path.exists("solved_flags"):
+        with open("solved_flags", "rb") as f:
+            solved_flags = pickle.load(f)
+    else:
+        solved_flags = {}
 
 
 @run_async
@@ -24,6 +40,19 @@ def bot_help(update, context):
         <b>Codeberry Club Bot Commands:</b>
         
         <b>You could submit flag by simply sending it to the bot</b>
+        
+        <b>Challenge 1:</b>
+        <i>Send /start command and reply to bot in order to continue</i>
+        
+        <b>Challenge 2:</b>
+        <i>Junior team member got a task to obfuscate Spring Boot application</i>
+        <i>However, it looks like something is wrong. Could you help?</i> 
+        <i>https://drive.google.com/file/d/1i5s71QN9WbLDiMyajABKGPGS9gwqDCN8/view?usp=sharing</i>
+        
+        <b>Challenge 3:</b>
+        <i>Your colleague is working on very important customer project and unfortunately, forgot the password to the admin page</i>
+        <i>It could lead to a lot of problems. Could you help?</i>
+        <i>http://ec2-54-246-224-31.eu-west-1.compute.amazonaws.com:8888/login</i>
         
         /help - show this help
         /statusboard - show current status of the challenge
@@ -69,7 +98,7 @@ def submit_flag(update, context):
 def get_statusboard():
     result = ""
     for key, value in dict(
-        sorted(dict_of_challengers.items(), key=lambda item: item[1])
+        sorted(dict_of_challengers.items(), key=lambda item: -item[1])
     ).items():
         result += "<b>{}</b> - {}\n".format(key, value)
     return result
@@ -86,35 +115,39 @@ def statusboard(update, context):
 
 @run_async
 def fast_hasher(update, context):
-    hashed = hashlib.sha256(update.message.text.encode("utf-8")).hexdigest()
+    username = update.message.from_user["username"]
     message = update.message.text
     print(message)
     try:
-        print(hashed)
-        if message == hashed:
+        if message == hashed_flags.get(username, ""):
             print("Success")
             update.message.reply_text(settings.FLAG1)
     except Exception as e:
         print(e)
     rand = "".join(random.choice(ascii_letters) for _ in range(20))
     hashed = hashlib.sha256(rand.encode()).hexdigest()
+    hashed_flags[username] = hashed
     update.message.reply_text(rand)
     sleep(timeout)
     chat_id = update.message.chat.id
     context.bot.send_message(
         chat_id,
-        text="""
-                                TOO SLOW!
-                                The answer is {}
-                                """.format(
-            hashed
-        ),
+        text="""TOO SLOW! The answer is {}""".format(hashed),
         parse_mode="HTML",
     )
+    hashed_flags[username] = ""
+
+
+def stop(signum, frame):
+    with open("dict_of_challengers", "wb") as f:
+        pickle.dump(dict_of_challengers, f)
+    with open("solved_flags", "wb") as f:
+        pickle.dump(solved_flags, f)
 
 
 def main():
-    updater = Updater(settings.AUTH_TOKEN, use_context=True)
+    read_statusboard()
+    updater = Updater(settings.AUTH_TOKEN, user_sig_handler=stop, use_context=True)
     updater.dispatcher.add_handler(CommandHandler("help", bot_help))
     updater.dispatcher.add_handler(CommandHandler("start", start_challenge))
     updater.dispatcher.add_handler(CommandHandler("statusboard", statusboard))
