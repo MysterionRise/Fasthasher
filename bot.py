@@ -121,8 +121,8 @@ def statusboard(update, context):
 def get_username_from_message(message):
     username = message.from_user["username"]
     if username is None:
-        return username["id"]
-
+        return message.from_user["id"]
+    return username
 
 @run_async
 def fast_hasher(update, context):
