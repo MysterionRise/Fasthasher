@@ -11,7 +11,7 @@ from telegram.ext.dispatcher import run_async
 import settings
 
 hello = "ju57 7ry 70 b347 my h45h3r! y0u mu57 h45h 7h3 57r1n65"
-flag_prefix = "CODEBERRY_CTF"
+flag_prefix = "CODEBERRY_CLUB_CTF"
 timeout = 1
 hashed_flags = {}
 
@@ -39,20 +39,24 @@ def bot_help(update, context):
         text="""
         <b>Codeberry Club Bot Commands:</b>
         
-        <b>You could submit flag by simply sending it to the bot</b>
+        <b>You could submit flag by simply sending it to the bot - CODEBERRY_CLUB_CTF</b>
         
-        <b>Challenge 1:</b>
+        <b>Challenge 1:</b> <i>ppc</i>
         <i>Send /start command and reply to bot in order to continue</i>
         
-        <b>Challenge 2:</b>
+        <b>Challenge 2:</b> <i>reverse</i>
         <i>Junior team member got a task to obfuscate Spring Boot application</i>
         <i>However, it looks like something is wrong. Could you help?</i> 
-        <i>https://drive.google.com/file/d/1i5s71QN9WbLDiMyajABKGPGS9gwqDCN8/view?usp=sharing</i>
+        <i>https://drive.google.com/file/d/19Yse-GiP_DApuEJVJvOHmrF6fuTQazJA/view?usp=sharing</i>
         
-        <b>Challenge 3:</b>
-        <i>Your colleague is working on very important customer project and unfortunately, forgot the password to the admin page</i>
+        <b>Challenge 3:</b> <i>web</i>
+        <i>Your colleague is working on important customer project and unfortunately, forgot the password to the admin page</i>
         <i>It could lead to a lot of problems. Could you help?</i>
-        <i>http://ec2-54-246-224-31.eu-west-1.compute.amazonaws.com:8888/login</i>
+        <i>http://54.75.73.212:8888/login</i>
+        
+        <b>Challenge 4:</b> <i>stega</i> <i>osint</i>
+        <i>We hide important things somewhere at our Codeberry Club telegram channel (https://t.me/codeberryclub)</i>
+        <i>Could you find it?</i>
         
         /help - show this help
         /statusboard - show current status of the challenge
@@ -73,11 +77,12 @@ def start_challenge(update, context):
 @run_async
 def submit_flag(update, context):
     message = update.message.text
-    username = update.message.from_user["username"]
+    username = get_username_from_message(update.message)
     if (
         message == settings.FLAG1
         or message == settings.FLAG2
         or message == settings.FLAG3
+        or message == settings.FLAG4
     ):
         solved = solved_flags.get(username, [])
         if message not in solved:
@@ -113,9 +118,15 @@ def statusboard(update, context):
         print(e)
 
 
+def get_username_from_message(message):
+    username = message.from_user["username"]
+    if username is None:
+        return username["id"]
+
+
 @run_async
 def fast_hasher(update, context):
-    username = update.message.from_user["username"]
+    username = get_username_from_message(update.message)
     message = update.message.text
     print(message)
     try:
@@ -125,7 +136,7 @@ def fast_hasher(update, context):
     except Exception as e:
         print(e)
     rand = "".join(random.choice(ascii_letters) for _ in range(20))
-    hashed = hashlib.sha256(rand.encode()).hexdigest()
+    hashed = hashlib.md5(rand.encode()).hexdigest()
     hashed_flags[username] = hashed
     update.message.reply_text(rand)
     sleep(timeout)
